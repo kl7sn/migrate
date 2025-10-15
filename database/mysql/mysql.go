@@ -17,8 +17,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/hashicorp/go-multierror"
+
+	"github.com/golang-migrate/migrate/v4/database"
 )
 
 var _ database.Driver = (*Mysql)(nil) // explicit compile time type check
@@ -353,14 +354,14 @@ func (m *Mysql) Run(migration io.Reader) error {
 	return nil
 }
 
-func (m *Mysql) SetVersion(version int, dirty bool) error {
+func (m *Mysql) SetVersion(business string, version int, dirty bool) error {
 	tx, err := m.conn.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return &database.Error{OrigErr: err, Err: "transaction start failed"}
 	}
 
-	query := "DELETE FROM `" + m.config.MigrationsTable + "` LIMIT 1"
-	if _, err := tx.ExecContext(context.Background(), query); err != nil {
+	query := "DELETE FROM `" + m.config.MigrationsTable + "` WHERE business = ? LIMIT 1"
+	if _, err := tx.ExecContext(context.Background(), query, business); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			err = multierror.Append(err, errRollback)
 		}
@@ -371,8 +372,8 @@ func (m *Mysql) SetVersion(version int, dirty bool) error {
 	// empty schema version for failed down migration on the first migration
 	// See: https://github.com/golang-migrate/migrate/issues/330
 	if version >= 0 || (version == database.NilVersion && dirty) {
-		query := "INSERT INTO `" + m.config.MigrationsTable + "` (version, dirty) VALUES (?, ?)"
-		if _, err := tx.ExecContext(context.Background(), query, version, dirty); err != nil {
+		query := "INSERT INTO `" + m.config.MigrationsTable + "` (business, version, dirty) VALUES (?, ?, ?)"
+		if _, err := tx.ExecContext(context.Background(), query, business, version, dirty); err != nil {
 			if errRollback := tx.Rollback(); errRollback != nil {
 				err = multierror.Append(err, errRollback)
 			}
@@ -387,9 +388,9 @@ func (m *Mysql) SetVersion(version int, dirty bool) error {
 	return nil
 }
 
-func (m *Mysql) Version() (version int, dirty bool, err error) {
-	query := "SELECT version, dirty FROM `" + m.config.MigrationsTable + "` LIMIT 1"
-	err = m.conn.QueryRowContext(context.Background(), query).Scan(&version, &dirty)
+func (m *Mysql) Version(business string) (version int, dirty bool, err error) {
+	query := "SELECT version, dirty FROM `" + m.config.MigrationsTable + "` WHERE business = ? LIMIT 1"
+	err = m.conn.QueryRowContext(context.Background(), query, business).Scan(&version, &dirty)
 	switch {
 	case err == sql.ErrNoRows:
 		return database.NilVersion, false, nil
@@ -489,7 +490,7 @@ func (m *Mysql) ensureVersionTable() (err error) {
 	}
 
 	// if not, create the empty migration table
-	query = "CREATE TABLE `" + m.config.MigrationsTable + "` (version bigint not null primary key, dirty boolean not null)"
+	query = "CREATE TABLE `" + m.config.MigrationsTable + "` (business varchar(255) not null, version bigint not null primary key, dirty boolean not null)"
 	if _, err := m.conn.ExecContext(context.Background(), query); err != nil {
 		return &database.Error{OrigErr: err, Query: []byte(query)}
 	}

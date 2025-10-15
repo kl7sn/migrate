@@ -61,6 +61,7 @@ type Migrate struct {
 	databaseName string
 	databaseDrv  database.Driver
 
+	business string
 	// Log accepts a Logger interface
 	Log Logger
 
@@ -118,7 +119,7 @@ func New(sourceURL, databaseURL string) (*Migrate, error) {
 // and an existing database instance. The source URL scheme is defined by each driver.
 // Use any string that can serve as an identifier during logging as databaseName.
 // You are responsible for closing the underlying database client if necessary.
-func NewWithDatabaseInstance(sourceURL string, databaseName string, databaseInstance database.Driver) (*Migrate, error) {
+func NewWithDatabaseInstance(sourceURL string, databaseName string, business string, databaseInstance database.Driver) (*Migrate, error) {
 	m := newCommon()
 
 	sourceName, err := iurl.SchemeFromURL(sourceURL)
@@ -136,7 +137,7 @@ func NewWithDatabaseInstance(sourceURL string, databaseName string, databaseInst
 	m.sourceDrv = sourceDrv
 
 	m.databaseDrv = databaseInstance
-
+	m.business = business
 	return m, nil
 }
 
@@ -216,7 +217,7 @@ func (m *Migrate) Migrate(version uint) error {
 		return err
 	}
 
-	curVersion, dirty, err := m.databaseDrv.Version()
+	curVersion, dirty, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return m.unlockErr(err)
 	}
@@ -242,7 +243,7 @@ func (m *Migrate) Steps(n int) error {
 		return err
 	}
 
-	curVersion, dirty, err := m.databaseDrv.Version()
+	curVersion, dirty, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return m.unlockErr(err)
 	}
@@ -269,7 +270,7 @@ func (m *Migrate) Up() error {
 		return err
 	}
 
-	curVersion, dirty, err := m.databaseDrv.Version()
+	curVersion, dirty, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return m.unlockErr(err)
 	}
@@ -291,7 +292,7 @@ func (m *Migrate) Down() error {
 		return err
 	}
 
-	curVersion, dirty, err := m.databaseDrv.Version()
+	curVersion, dirty, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return m.unlockErr(err)
 	}
@@ -329,7 +330,7 @@ func (m *Migrate) Run(migration ...*Migration) error {
 		return err
 	}
 
-	curVersion, dirty, err := m.databaseDrv.Version()
+	curVersion, dirty, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return m.unlockErr(err)
 	}
@@ -373,7 +374,7 @@ func (m *Migrate) Force(version int) error {
 		return err
 	}
 
-	if err := m.databaseDrv.SetVersion(version, false); err != nil {
+	if err := m.databaseDrv.SetVersion(m.business, version, false); err != nil {
 		return m.unlockErr(err)
 	}
 
@@ -383,7 +384,7 @@ func (m *Migrate) Force(version int) error {
 // Version returns the currently active migration version.
 // If no migration has been applied, yet, it will return ErrNilVersion.
 func (m *Migrate) Version() (version uint, dirty bool, err error) {
-	v, d, err := m.databaseDrv.Version()
+	v, d, err := m.databaseDrv.Version(m.business)
 	if err != nil {
 		return 0, false, err
 	}
@@ -737,7 +738,7 @@ func (m *Migrate) runMigrations(ret <-chan interface{}) error {
 			migr := r
 
 			// set version with dirty state
-			if err := m.databaseDrv.SetVersion(migr.TargetVersion, true); err != nil {
+			if err := m.databaseDrv.SetVersion(m.business, migr.TargetVersion, true); err != nil {
 				return err
 			}
 
@@ -749,7 +750,7 @@ func (m *Migrate) runMigrations(ret <-chan interface{}) error {
 			}
 
 			// set clean state
-			if err := m.databaseDrv.SetVersion(migr.TargetVersion, false); err != nil {
+			if err := m.databaseDrv.SetVersion(m.business, migr.TargetVersion, false); err != nil {
 				return err
 			}
 
