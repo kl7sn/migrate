@@ -12,10 +12,10 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/hashicorp/go-multierror"
 	"github.com/lib/pq"
+	"migrate/v4"
+	"migrate/v4/database"
 )
 
 func init() {

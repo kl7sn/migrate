@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 
 	"github.com/Azure/go-autorest/autorest/adal"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/hashicorp/go-multierror"
 	mssql "github.com/microsoft/go-mssqldb" // mssql support
+	"migrate/v4"
+	"migrate/v4/database"
 )
 
 func init() {

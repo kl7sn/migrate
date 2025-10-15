@@ -10,10 +10,10 @@ import (
 	nurl "net/url"
 	"sync/atomic"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/hashicorp/go-multierror"
 	_ "github.com/nakagami/firebirdsql"
+	"migrate/v4"
+	"migrate/v4/database"
 )
 
 func init() {

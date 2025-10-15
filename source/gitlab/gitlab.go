@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/xanzy/go-gitlab"
+	"migrate/v4/source"
 )
 
 func init() {

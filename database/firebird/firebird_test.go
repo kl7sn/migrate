@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golang-migrate/migrate/v4"
 	"io"
+	"migrate/v4"
 	"strings"
 	"testing"
 
 	"github.com/dhui/dktest"
 
-	dt "github.com/golang-migrate/migrate/v4/database/testing"
-	"github.com/golang-migrate/migrate/v4/dktesting"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	dt "migrate/v4/database/testing"
+	"migrate/v4/dktesting"
+	_ "migrate/v4/source/file"
 
 	_ "github.com/nakagami/firebirdsql"
 )
@@ -45,7 +45,7 @@ var (
 )
 
 func fbConnectionString(host, port string) string {
-	//firebird://user:password@servername[:port_number]/database_name_or_file[?params1=value1[&param2=value2]...]
+	// firebird://user:password@servername[:port_number]/database_name_or_file[?params1=value1[&param2=value2]...]
 	return fmt.Sprintf("firebird://%s:%s@%s:%s//firebird/data/%s", user, password, host, port, dbName)
 }
 

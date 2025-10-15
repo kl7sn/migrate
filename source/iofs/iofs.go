@@ -10,7 +10,7 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/golang-migrate/migrate/v4/source"
+	"migrate/v4/source"
 )
 
 type driver struct {

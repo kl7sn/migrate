@@ -10,8 +10,8 @@ import (
 
 	"cloud.google.com/go/storage"
 	"context"
-	"github.com/golang-migrate/migrate/v4/source"
 	"google.golang.org/api/iterator"
+	"migrate/v4/source"
 )
 
 func init() {
